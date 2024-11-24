@@ -1,4 +1,5 @@
 #!/bin/bash
+#
 # Personnaliser les configurations selon votre installations
 #configurer les repertoires, noms de base de données et password, noms des dockers
 # utiliser le script suivant pour l'executer depuis githube
@@ -46,19 +47,49 @@ check_command "sudo apt install -y docker.io" \
     "Docker installé avec succès." \
     "Erreur lors de l'installation de Docker."
 
-# Vérification et installation de Docker Compose V2
-if ! docker compose version &>/dev/null; then
-    echo "Docker Compose V2 n'est pas installé. Installation..."
+# Vérification et mise à jour ou installation de Docker Compose V2
+echo "== Vérification de Docker Compose =="
+
+# Vérifie si Docker Compose est installé
+if docker compose version &>/dev/null; then
+    INSTALLED_VERSION=$(docker compose version --short)
+    REQUIRED_VERSION="2.0.0"
+
+    echo "Docker Compose installé (version : $INSTALLED_VERSION)."
+    
+    # Compare les versions pour savoir si une mise à jour est nécessaire
+    if dpkg --compare-versions "$INSTALLED_VERSION" "ge" "$REQUIRED_VERSION"; then
+        success "Docker Compose V2 est à jour."
+    else
+        echo "La version de Docker Compose est obsolète. Mise à jour en cours..."
+        sudo rm -f /usr/local/bin/docker-compose
+        sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+        sudo chmod +x /usr/local/bin/docker-compose
+        success "Docker Compose mis à jour avec succès."
+    fi
+else
+    echo "Docker Compose n'est pas installé. Installation en cours..."
     sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
     sudo chmod +x /usr/local/bin/docker-compose
-    success "Docker Compose V2 installé dans /usr/local/bin."
-else
-    success "Docker Compose V2 déjà présent."
+    success "Docker Compose installé avec succès."
 fi
 
-# Vérification de la version de Docker Compose
-echo "Vérification de la version de Docker Compose..."
-docker compose version || error "Docker Compose V2 non installé correctement."
+# Validation de l'installation ou de la mise à jour
+if docker compose version &>/dev/null; then
+    INSTALLED_VERSION=$(docker compose version --short)
+    success "Docker Compose V2 installé et fonctionnel (version : $INSTALLED_VERSION)."
+else
+    error "Docker Compose V2 non installé correctement. Vérifiez votre configuration."
+fi
+
+# Vérification de Docker (facultatif, pour confirmer que Docker lui-même est fonctionnel)
+if docker version &>/dev/null; then
+    success "Docker est opérationnel."
+else
+    error "Docker n'est pas installé ou configuré correctement."
+fi
+
+echo "== Vérification terminée =="
 
 # 3. Activation du lancement automatique de Docker au démarrage
 echo "Activation de Docker au démarrage..."
