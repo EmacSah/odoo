@@ -61,7 +61,7 @@ check_command "sudo usermod -aG docker $USER" \
 
 # 5. Création de la structure du projet
 echo "Création de la structure du projet..."
-PROJECT_DIR="/usr/transbot"
+PROJECT_DIR="/usr/prospection"
 check_command "sudo mkdir -p $PROJECT_DIR/{config,extra-addons,data}" \
     "Répertoires créés avec succès." \
     "Erreur lors de la création des répertoires."
@@ -79,9 +79,9 @@ sudo tee $PROJECT_DIR/config/odoo.conf > /dev/null <<EOL
 addons_path = /mnt/extra-addons
 db_host = pg_db
 db_port = 5432
-db_user = transbot
-db_password = transbot
-db_name = transbot
+db_user = prospection
+db_password = prospection
+db_name = prospection
 xmlrpc_interface = 0.0.0.0
 EOL
 success "Fichier odoo.conf créé."
@@ -104,9 +104,9 @@ services:
     image: postgres:14
     container_name: pg_db
     environment:
-      POSTGRES_DB: transbot
-      POSTGRES_USER: transbot
-      POSTGRES_PASSWORD: transbot
+      POSTGRES_DB: prospection
+      POSTGRES_USER: prospection
+      POSTGRES_PASSWORD: prospection
     volumes:
       - ./data:/var/lib/postgresql/data
 
@@ -135,13 +135,13 @@ check_command "sudo docker-compose up -d" \
 
 # 11. Vérification de la connexion à la base de données
 echo "Vérification de la connexion à la base de données PostgreSQL..."
-check_command "sudo docker exec -it pg_db psql -U transbot -c '\l'" \
+check_command "sudo docker exec -it pg_db psql -U prospection -c '\l'" \
     "Connexion à PostgreSQL réussie." \
     "Erreur de connexion à PostgreSQL."
 
 # 12. Initialisation de la base de données dans Odoo
 echo "Initialisation de la base de données Odoo..."
-check_command "sudo docker exec -it odoo_web odoo -d transbot -i base" \
+check_command "sudo docker exec -it odoo_web odoo -d prospection -i base" \
     "Base de données initialisée avec succès." \
     "Erreur d'initialisation de la base de données Odoo."
 
