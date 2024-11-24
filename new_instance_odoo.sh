@@ -1,5 +1,27 @@
 #!/bin/bash
+#-------------------------------------------------------------------------------------------------------------------------
+# Auteur : Emac Sah : emacsah@gmail.com | Data Analyst - DevOps
+# Date : 24/11/2024
+# Description : Ce script permet de déployer une nouvelle instance d'Odoo sur une machine virtuelle où
+#Docker et Docker Compose sont déjà installés. Il configure une nouvelle base de données PostgreSQL et 
+#démarre les conteneurs nécessaires pour Odoo.
 
+#Instructions d'Utilisation
+#Prérequis :
+#Assurez-vous que Docker et Docker Compose sont déjà installés sur votre machine.
+#Assurez-vous que les variables de configuration
+#(PROJECT_NAME, BASE_DIR, ODOO_CONTAINER, POSTGRES_CONTAINER, DB_NAME, DB_USER, DB_PASSWORD, NETWORK_NAME, ODOO_VERSION) 
+#sont correctement définies.
+
+#Exécution :
+#Rendez le script exécutable : chmod +x deploy_new_odoo_instance.sh
+#Exécutez le script :./deploy_new_odoo_instance.sh
+#Vérification : Une fois le script exécuté, 
+#vérifiez que les conteneurs sont en cours d'exécution : docker ps
+
+#Accédez à l'application Odoo via l'URL fournie dans les informations de connexion.
+
+#--------------------------------------------------------------------------------------------------------------------
 # Couleurs pour les messages
 GREEN='\033[0;32m'
 RED='\033[0;31m'
