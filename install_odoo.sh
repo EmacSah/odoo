@@ -219,10 +219,40 @@ success "Conteneurs démarrés avec succès."
 
 
 # 10. Initialisation de la base de données dans Odoo
+echo "Validation de l'existence de la base de données PostgreSQL..."
 
+# Vérifier si la base de données existe
+DB_EXISTS=$(docker exec -it $POSTGRES_CONTAINER psql -U $DB_USER -tc "SELECT 1 FROM pg_database WHERE datname='$DB_NAME';" | tr -d '[:space:]')
+
+if [[ "$DB_EXISTS" == "1" ]]; then
+    success "La base de données '$DB_NAME' existe déjà."
+else
+    echo "La base de données '$DB_NAME' n'existe pas. Création en cours..."
+    docker exec -it $POSTGRES_CONTAINER psql -U $DB_USER -c "CREATE DATABASE $DB_NAME;"
+    if [[ $? -eq 0 ]]; then
+        success "Base de données '$DB_NAME' créée avec succès."
+        echo "Attribution des privilèges à l'utilisateur '$DB_USER'..."
+        docker exec -it $POSTGRES_CONTAINER psql -U $DB_USER -c "GRANT ALL PRIVILEGES ON DATABASE $DB_NAME TO $DB_USER;"
+        if [[ $? -eq 0 ]]; then
+            success "Privilèges attribués avec succès à l'utilisateur '$DB_USER'."
+        else
+            error "Erreur lors de l'attribution des privilèges à l'utilisateur '$DB_USER'."
+        fi
+    else
+        error "Erreur lors de la création de la base de données '$DB_NAME'."
+    fi
+fi
+
+# Lister les bases de données pour confirmation
+echo "Liste des bases de données existantes :"
+docker exec -it $POSTGRES_CONTAINER psql -U $DB_USER -c "\l"
+
+success "Validation et gestion de la base de données terminées."
 
 
 init_database() {
+    
+    
     echo "Tentative d'initialisation de la base de données avec Odoo..."
 
     # Première tentative d'initialisation
