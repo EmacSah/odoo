@@ -47,11 +47,19 @@ check_command "sudo apt install -y docker.io" \
     "Docker installé avec succès." \
     "Erreur lors de l'installation de Docker."
 
-# Vérification et mise à jour ou installation de Docker Compose V2
+# Vérification et installation/mise à jour de Docker Compose V2
 echo "== Vérification de Docker Compose =="
 
-if docker compose version &>/dev/null; then
-    INSTALLED_VERSION=$(docker compose version --short)
+# Vérifie si Docker Compose est installé
+if docker compose version &>/dev/null || docker-compose --version &>/dev/null; then
+    # Vérifie si "docker compose" est disponible
+    if docker compose version &>/dev/null; then
+        INSTALLED_VERSION=$(docker compose version --short)
+    else
+        # Utilise "docker-compose" si "docker compose" n'est pas disponible
+        INSTALLED_VERSION=$(docker-compose --version | awk '{print $3}' | sed 's/,//')
+    fi
+
     REQUIRED_VERSION="2.0.0"
 
     echo "Docker Compose installé (version : $INSTALLED_VERSION)."
@@ -73,19 +81,16 @@ else
     success "Docker Compose installé avec succès."
 fi
 
-# Validation de l'installation ou de la mise à jour
-if docker compose version &>/dev/null; then
-    INSTALLED_VERSION=$(docker compose version --short)
+# Validation finale
+if docker compose version &>/dev/null || docker-compose --version &>/dev/null; then
+    if docker compose version &>/dev/null; then
+        INSTALLED_VERSION=$(docker compose version --short)
+    else
+        INSTALLED_VERSION=$(docker-compose --version | awk '{print $3}' | sed 's/,//')
+    fi
     success "Docker Compose V2 installé et fonctionnel (version : $INSTALLED_VERSION)."
 else
     error "Docker Compose V2 non installé correctement. Vérifiez votre configuration."
-fi
-
-# Vérification de Docker (facultatif, pour confirmer que Docker lui-même est fonctionnel)
-if docker version &>/dev/null; then
-    success "Docker est opérationnel."
-else
-    error "Docker n'est pas installé ou configuré correctement."
 fi
 
 echo "== Vérification terminée =="
