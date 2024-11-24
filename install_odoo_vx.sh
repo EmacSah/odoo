@@ -143,7 +143,7 @@ success "Fichier docker-compose.yml créé."
 # 10. Positionnement dans le répertoire et démarrage des conteneurs Docker
 echo "Démarrage des conteneurs..."
 cd $BASE_DIR
-check_command "docker compose down && docker compose up -d" \
+check_command "docker-compose down && docker-compose up -d" \
     "Conteneurs démarrés avec succès." \
     "Erreur lors du démarrage des conteneurs."
 
