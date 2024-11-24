@@ -1,15 +1,12 @@
 #!/bin/bash
-
+# Personnaliser les configurations selon votre installations
+#configurer les repertoires, noms de base de données et password, noms des dockers
+# utiliser le script suivant pour l'executer depuis githube
+#bash <(curl -s https://raw.githubusercontent.com/no_user_github/repository_name/branch_name/file_name)
 # Couleurs pour les messages
 GREEN='\033[0;32m'
 RED='\033[0;31m'
 NC='\033[0m' # No Color
-
-
-# Fichier de log
-#LOG_FILE="/var/log/install_odoo16.log"
-#exec > >(tee -a $LOG_FILE) 2>&1
-
 
 # Fonction pour afficher un message de validation
 success() {
@@ -63,7 +60,6 @@ fi
 echo "Vérification de la version de Docker Compose..."
 docker compose version || error "Docker Compose V2 non installé correctement."
 
-
 # 3. Activation du lancement automatique de Docker au démarrage
 echo "Activation de Docker au démarrage..."
 check_command "sudo systemctl enable docker" \
@@ -82,13 +78,13 @@ check_command "mkdir -p $BASE_DIR/{config,extra-addons,data}" \
     "Répertoires créés avec succès." \
     "Erreur lors de la création des répertoires."
 
-# 6. Attribution des droits sur les répertoires
+# Vérification des droits
 echo "Attribution des droits sur les répertoires..."
 check_command "chmod -R 755 $BASE_DIR && chown -R $USER:$USER $BASE_DIR" \
     "Droits attribués avec succès." \
     "Erreur lors de l'attribution des droits."
 
-# 7. Création et configuration du fichier odoo.conf
+# 6. Création et configuration du fichier odoo.conf
 echo "Création du fichier odoo.conf..."
 tee $BASE_DIR/config/odoo.conf > /dev/null <<EOL
 [options]
@@ -102,7 +98,7 @@ xmlrpc_interface = 0.0.0.0
 EOL
 success "Fichier odoo.conf créé."
 
-# 8. Création et configuration du Dockerfile
+# 7. Création et configuration du Dockerfile
 echo "Création du Dockerfile..."
 tee $BASE_DIR/Dockerfile > /dev/null <<EOL
 FROM odoo:16
@@ -110,7 +106,7 @@ COPY ./config /etc/odoo
 EOL
 success "Dockerfile créé."
 
-# 9. Création et configuration du fichier docker-compose.yml
+# 8. Création et configuration du fichier docker-compose.yml
 echo "Création du fichier docker-compose.yml..."
 tee $BASE_DIR/docker-compose.yml > /dev/null <<EOL
 version: '3.7'
@@ -136,38 +132,37 @@ services:
       - ./extra-addons:/mnt/extra-addons
     depends_on:
       - pg_db
-
 EOL
 success "Fichier docker-compose.yml créé."
 
-# 10. Positionnement dans le répertoire et démarrage des conteneurs Docker
+# 9. Positionnement dans le répertoire et démarrage des conteneurs Docker
 echo "Démarrage des conteneurs..."
 cd $BASE_DIR
-check_command "docker-compose down && docker-compose up -d" \
+check_command "docker compose down && docker compose up -d" \
     "Conteneurs démarrés avec succès." \
     "Erreur lors du démarrage des conteneurs."
 
-# 11. Initialisation de la base de données dans Odoo
+# 10. Initialisation de la base de données dans Odoo
 echo "Initialisation de la base de données Odoo..."
 check_command "docker exec -it odoo_web odoo -d prospection -i base" \
     "Base de données initialisée avec succès." \
     "Erreur d'initialisation de la base de données Odoo."
 
-# 12. Vérification de l'état des services
+# 11. Vérification de l'état des services
 echo "Vérification des services..."
 docker ps && success "Services Odoo et PostgreSQL actifs."
 
-# 13. Désactivation du pare-feu (si nécessaire)
+# 12. Désactivation du pare-feu (si nécessaire)
 echo "Désactivation du pare-feu (si nécessaire)..."
 sudo ufw disable && success "Pare-feu désactivé."
 
-# 14. Test du port HTTP
+# 13. Test du port HTTP
 echo "Test du port HTTP..."
 check_command "curl -s http://127.0.0.1:8069" \
     "Port HTTP testé avec succès. Odoo est accessible." \
     "Erreur lors du test du port HTTP."
 
-# 15. Informations de connexion
+# 14. Informations de connexion
 echo "Lien d'accès à l'application Odoo :"
 echo "URL : http://<IP_PUBLIQUE_VM>:8069"
 echo "Identifiants par défaut :"
