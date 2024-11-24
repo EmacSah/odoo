@@ -50,7 +50,6 @@ check_command "sudo apt install -y docker.io" \
 # Vérification et mise à jour ou installation de Docker Compose V2
 echo "== Vérification de Docker Compose =="
 
-# Vérifie si Docker Compose est installé
 if docker compose version &>/dev/null; then
     INSTALLED_VERSION=$(docker compose version --short)
     REQUIRED_VERSION="2.0.0"
