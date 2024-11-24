@@ -174,7 +174,7 @@ success "Dockerfile créé."
 # 8. Création et configuration du fichier docker-compose.yml
 echo "Création du fichier docker-compose.yml..."
 tee $BASE_DIR/docker-compose.yml > /dev/null <<EOL
-version: '3.7'
+
 
 services:
   pg_db:
