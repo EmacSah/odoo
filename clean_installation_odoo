@@ -1,5 +1,29 @@
 #!/bin/bash
 
+#-------------------------------------------------------------------------------------------------------------------------
+# Auteur : Emac Sah : emacsah@gmail.com | Data Analyst - DevOps
+# Date : 24/11/2024
+# Description : Ce script permet de nettoyer une installation mal réalisée d'Odoo et PostgreSQL en supprimant les conteneurs,
+#images, volumes, réseaux, et configurations Docker associés. Il inclut également la suppression de Docker et Docker Compose
+#si nécessaire
+
+#Instructions d'Utilisation
+#Prérequis :
+#Assurez-vous que les variables de configuration (PROJECT_DIR) sont correctement définies.
+
+
+#Exécution :
+#Rendez le script exécutable : chmod +x clean_odoo_installation.sh
+#Exécutez le script :./clean_odoo_installation.sh
+#Vérification : Une fois le script exécuté, 
+#docker ps -a
+#docker images
+#docker volume ls
+
+#Accédez à l'application Odoo via l'URL fournie dans les informations de connexion.
+
+#--------------------------------------------------------------------------------------------------------------------
+
 # Couleurs pour les messages
 GREEN='\033[0;32m'
 RED='\033[0;31m'
