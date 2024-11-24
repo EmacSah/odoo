@@ -29,6 +29,20 @@ check_command() {
     fi
 }
 
+
+# Mise à jour du PATH pour inclure /usr/local/bin
+echo "Configuration du PATH pour inclure /usr/local/bin..."
+
+if ! grep -q 'export PATH="/usr/local/bin:$PATH"' ~/.bashrc; then
+    echo 'export PATH="/usr/local/bin:$PATH"' >> ~/.bashrc
+    source ~/.bashrc
+    echo "PATH mis à jour pour inclure /usr/local/bin."
+else
+    echo "PATH déjà configuré pour inclure /usr/local/bin."
+fi
+
+
+
 # Variables
 PROJECT_DIR="prospection"
 BASE_DIR="/home/$USER/$PROJECT_DIR"
@@ -43,7 +57,23 @@ check_command "sudo apt update && sudo apt upgrade -y" \
 
 # 2. Installation de Docker et Docker Compose
 echo "Installation de Docker..."
-check_command "sudo apt install -y docker.io" \
+
+# Ajout des dépôts officiels Docker
+echo "Configuration des dépôts officiels Docker..."
+check_command "sudo apt-get update && sudo apt-get install -y apt-transport-https ca-certificates curl software-properties-common" \
+    "Pré-requis pour Docker installés avec succès." \
+    "Erreur lors de l'installation des pré-requis pour Docker."
+
+check_command "curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg" \
+    "Clé GPG Docker ajoutée avec succès." \
+    "Erreur lors de l'ajout de la clé GPG Docker."
+
+check_command "echo 'deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable' | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null && sudo apt-get update" \
+    "Dépôts Docker configurés avec succès." \
+    "Erreur lors de la configuration des dépôts Docker."
+
+# Installation de Docker
+check_command "sudo apt-get install -y docker-ce docker-ce-cli containerd.io" \
     "Docker installé avec succès." \
     "Erreur lors de l'installation de Docker."
 
@@ -69,16 +99,15 @@ if docker compose version &>/dev/null || docker-compose --version &>/dev/null; t
         success "Docker Compose V2 est à jour."
     else
         echo "La version de Docker Compose est obsolète. Mise à jour en cours..."
-        sudo rm -f /usr/local/bin/docker-compose
-        sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-        sudo chmod +x /usr/local/bin/docker-compose
-        success "Docker Compose mis à jour avec succès."
+        check_command "sudo apt-get install -y docker-compose-plugin" \
+            "Docker Compose mis à jour avec succès." \
+            "Erreur lors de la mise à jour de Docker Compose."
     fi
 else
     echo "Docker Compose n'est pas installé. Installation en cours..."
-    sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-    sudo chmod +x /usr/local/bin/docker-compose
-    success "Docker Compose installé avec succès."
+    check_command "sudo apt-get install -y docker-compose-plugin" \
+        "Docker Compose installé avec succès." \
+        "Erreur lors de l'installation de Docker Compose."
 fi
 
 # Validation finale
@@ -94,6 +123,7 @@ else
 fi
 
 echo "== Vérification terminée =="
+
 
 # 3. Activation du lancement automatique de Docker au démarrage
 echo "Activation de Docker au démarrage..."
