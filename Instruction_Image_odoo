@@ -1,0 +1,15 @@
+Instructions d'Utilisation
+Prérequis :
+Assurez-vous que Docker est installé et en cours d'exécution sur votre machine.
+Exécution :
+
+Rendez le script de construction exécutable : chmod +x build_odoo_image.sh
+Exécutez le script de construction : ./build_odoo_image.sh
+
+Déploiement :
+
+Démarrez un conteneur à partir de l'image personnalisée : docker run -it --rm odoo-custom
+
+Suivez les instructions à l'écran pour fournir les paramètres de configuration.
+Ce script automatisé crée une image Docker pour Odoo qui demande les paramètres de configuration à 
+l'utilisateur lors du déploiement, permettant ainsi une configuration flexible et personnalisée.
