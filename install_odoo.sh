@@ -204,19 +204,17 @@ if [ ! -f "$BASE_DIR/Dockerfile" ]; then
 fi
 
 # Exécutez les commandes Docker Compose avec des messages de débogage
-echo "Exécution de la commande : $DOCKER_COMPOSE_CMD down"
-if ! $DOCKER_COMPOSE_CMD down; then
-    error "Erreur lors de l'exécution de la commande : $DOCKER_COMPOSE_CMD down"
+echo "Exécution de la commande : docker compose down"
+if ! docker compose down; then
+    error "Erreur lors de l'exécution de la commande : docker compose down"
 fi
 
-echo "Exécution de la commande : $DOCKER_COMPOSE_CMD up -d"
-if ! $DOCKER_COMPOSE_CMD up -d; then
-    error "Erreur lors de l'exécution de la commande : $DOCKER_COMPOSE_CMD up -d"
+echo "Exécution de la commande : docker compose up -d"
+if ! docker compose up -d; then
+    error "Erreur lors de l'exécution de la commande : docker compose up -d"
 fi
 
 success "Conteneurs démarrés avec succès."
-
-
 
 # 10. Initialisation de la base de données dans Odoo
 echo "Validation de l'existence de la base de données PostgreSQL..."
@@ -249,10 +247,7 @@ docker exec -it $POSTGRES_CONTAINER psql -U $DB_USER -c "\l"
 
 success "Validation et gestion de la base de données terminées."
 
-
 init_database() {
-    
-    
     echo "Tentative d'initialisation de la base de données avec Odoo..."
 
     # Première tentative d'initialisation
@@ -291,10 +286,6 @@ check_pg_connection
 
 # Si tout est bon, continuer le script
 success "La base de données est prête. Continuité du script."
-
-
-
-
 
 # 11. Vérification de l'état des services
 echo "Vérification des services..."
