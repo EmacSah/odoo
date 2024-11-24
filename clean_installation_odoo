@@ -1,0 +1,97 @@
+#!/bin/bash
+
+# Couleurs pour les messages
+GREEN='\033[0;32m'
+RED='\033[0;31m'
+NC='\033[0m' # No Color
+
+# Variables configurables
+PROJECT_DIR="/usr/prospection"  # Remplacez par le chemin de votre installation actuelle
+
+# Fonction pour afficher un message de validation
+success() {
+    echo -e "${GREEN}[SUCCÈS] $1${NC}"
+}
+
+# Fonction pour afficher un message d'erreur
+error() {
+    echo -e "${RED}[ERREUR] $1${NC}"
+    exit 1
+}
+
+# Fonction pour vérifier une commande et afficher un message personnalisé
+check_command() {
+    if eval "$1"; then
+        success "$2"
+    else
+        error "$3"
+    fi
+}
+
+echo "== Début du nettoyage de l'installation existante d'Odoo et PostgreSQL =="
+
+# 1. Ajout du fichier dans le PATH
+echo "Ajout du fichier dans le PATH..."
+if ! grep -q 'export PATH="/usr/local/bin:$PATH"' ~/.bashrc; then
+    echo 'export PATH="/usr/local/bin:$PATH"' >> ~/.bashrc
+    source ~/.bashrc
+    echo "PATH mis à jour pour inclure /usr/local/bin."
+else
+    echo "PATH déjà configuré pour inclure /usr/local/bin."
+fi
+
+# 2. Arrêter et supprimer les conteneurs Docker existants
+echo "Arrêt et suppression des conteneurs Docker existants..."
+check_command "sudo docker-compose down --volumes --remove-orphans" \
+    "Conteneurs Docker arrêtés et supprimés avec succès." \
+    "Erreur lors de l'arrêt et de la suppression des conteneurs Docker."
+
+# 3. Supprimer les images Docker associées
+echo "Suppression des images Docker associées..."
+check_command "sudo docker images -a | grep -i 'odoo\|postgres' | awk '{print $3}' | xargs sudo docker rmi -f" \
+    "Images Docker associées supprimées avec succès." \
+    "Erreur lors de la suppression des images Docker."
+
+# 4. Supprimer les volumes Docker
+echo "Suppression des volumes Docker..."
+check_command "sudo docker volume prune -f" \
+    "Volumes Docker supprimés avec succès." \
+    "Erreur lors de la suppression des volumes Docker."
+
+# 5. Supprimer les fichiers de configuration et le répertoire du projet
+echo "Suppression des fichiers de configuration et du répertoire du projet..."
+check_command "sudo rm -rf $PROJECT_DIR" \
+    "Répertoire du projet et fichiers de configuration supprimés avec succès." \
+    "Erreur lors de la suppression du répertoire du projet et des fichiers de configuration."
+
+# 6. Nettoyer les configurations Docker restantes
+echo "Nettoyage des configurations Docker restantes..."
+check_command "sudo docker system prune -a --volumes -f" \
+    "Configurations Docker restantes nettoyées avec succès." \
+    "Erreur lors du nettoyage des configurations Docker restantes."
+
+# 7. Supprimer les réseaux Docker
+echo "Suppression des réseaux Docker..."
+check_command "sudo docker network prune -f" \
+    "Réseaux Docker supprimés avec succès." \
+    "Erreur lors de la suppression des réseaux Docker."
+
+# 8. Supprimer Docker et ses configurations
+echo "Suppression de Docker et de ses configurations..."
+check_command "sudo apt remove -y docker.io && sudo apt purge -y docker.io && sudo rm -rf /var/lib/docker /etc/docker" \
+    "Docker et ses configurations supprimés avec succès." \
+    "Erreur lors de la suppression de Docker et de ses configurations."
+
+# 9. Supprimer Docker Compose
+echo "Suppression de Docker Compose..."
+check_command "sudo rm -f /usr/local/bin/docker-compose" \
+    "Docker Compose supprimé avec succès." \
+    "Erreur lors de la suppression de Docker Compose."
+
+# 10. Vérification finale
+echo "Vérification finale..."
+check_command "sudo docker ps -a && sudo docker images && sudo docker volume ls" \
+    "Vérification finale réussie. Tous les éléments Docker ont été supprimés." \
+    "Erreur lors de la vérification finale."
+
+success "Nettoyage de l'installation existante d'Odoo et PostgreSQL terminé avec succès."
