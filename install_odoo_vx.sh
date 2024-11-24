@@ -7,8 +7,8 @@ NC='\033[0m' # No Color
 
 
 # Fichier de log
-LOG_FILE="/var/log/install_odoo16.log"
-exec > >(tee -a $LOG_FILE) 2>&1
+#LOG_FILE="/var/log/install_odoo16.log"
+#exec > >(tee -a $LOG_FILE) 2>&1
 
 
 # Fonction pour afficher un message de validation
