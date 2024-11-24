@@ -49,13 +49,20 @@ check_command "sudo apt install -y docker.io" \
     "Docker installé avec succès." \
     "Erreur lors de l'installation de Docker."
 
-echo "Installation de Docker Compose..."
-check_command "sudo apt install -y docker-compose" \
-    "Docker Compose installé avec succès." \
-    "Erreur lors de l'installation de Docker Compose."
+# Vérification et installation de Docker Compose V2
+if ! docker compose version &>/dev/null; then
+    echo "Docker Compose V2 n'est pas installé. Installation..."
+    sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+    sudo chmod +x /usr/local/bin/docker-compose
+    success "Docker Compose V2 installé dans /usr/local/bin."
+else
+    success "Docker Compose V2 déjà présent."
+fi
 
-echo "Version de Docker Compose :"
-docker-compose --version || error "Docker Compose non installé correctement."
+# Vérification de la version de Docker Compose
+echo "Vérification de la version de Docker Compose..."
+docker compose version || error "Docker Compose V2 non installé correctement."
+
 
 # 3. Activation du lancement automatique de Docker au démarrage
 echo "Activation de Docker au démarrage..."
@@ -130,15 +137,13 @@ services:
     depends_on:
       - pg_db
 
-volumes:
-  postgres_data:
 EOL
 success "Fichier docker-compose.yml créé."
 
 # 10. Positionnement dans le répertoire et démarrage des conteneurs Docker
 echo "Démarrage des conteneurs..."
 cd $BASE_DIR
-check_command "docker-compose down && docker-compose up -d" \
+check_command "docker compose down && docker compose up -d" \
     "Conteneurs démarrés avec succès." \
     "Erreur lors du démarrage des conteneurs."
 
