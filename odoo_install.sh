@@ -179,12 +179,43 @@ else
     error "Aucune commande Docker Compose valide trouvée. Vérifiez votre installation."
 fi
 
+
 # 9. Positionnement dans le répertoire et démarrage des conteneurs Docker
 echo "Démarrage des conteneurs..."
 cd $BASE_DIR
-check_command "$DOCKER_COMPOSE_CMD down && $DOCKER_COMPOSE_CMD up -d" \
-    "Conteneurs démarrés avec succès." \
-    "Erreur lors du démarrage des conteneurs."
+
+# Vérifiez si le répertoire existe
+if [ ! -d "$BASE_DIR" ]; then
+    error "Le répertoire $BASE_DIR n'existe pas."
+fi
+
+# Vérifiez les permissions
+if [ ! -w "$BASE_DIR" ]; then
+    error "Permissions insuffisantes pour écrire dans le répertoire $BASE_DIR."
+fi
+
+# Vérifiez les fichiers de configuration
+if [ ! -f "$BASE_DIR/docker-compose.yml" ]; then
+    error "Le fichier docker-compose.yml n'existe pas dans $BASE_DIR."
+fi
+
+if [ ! -f "$BASE_DIR/Dockerfile" ]; then
+    error "Le fichier Dockerfile n'existe pas dans $BASE_DIR."
+fi
+
+# Exécutez les commandes Docker Compose avec des messages de débogage
+echo "Exécution de la commande : $DOCKER_COMPOSE_CMD down"
+if ! $DOCKER_COMPOSE_CMD down; then
+    error "Erreur lors de l'exécution de la commande : $DOCKER_COMPOSE_CMD down"
+fi
+
+echo "Exécution de la commande : $DOCKER_COMPOSE_CMD up -d"
+if ! $DOCKER_COMPOSE_CMD up -d; then
+    error "Erreur lors de l'exécution de la commande : $DOCKER_COMPOSE_CMD up -d"
+fi
+
+success "Conteneurs démarrés avec succès."
+
 
 
 # 10. Initialisation de la base de données dans Odoo
