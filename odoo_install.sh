@@ -170,12 +170,22 @@ services:
 EOL
 success "Fichier docker-compose.yml créé."
 
+# Détection de la commande Docker Compose appropriée
+if command -v docker compose &>/dev/null; then
+    DOCKER_COMPOSE_CMD="docker compose"
+elif command -v docker-compose &>/dev/null; then
+    DOCKER_COMPOSE_CMD="docker-compose"
+else
+    error "Aucune commande Docker Compose valide trouvée. Vérifiez votre installation."
+fi
+
 # 9. Positionnement dans le répertoire et démarrage des conteneurs Docker
 echo "Démarrage des conteneurs..."
 cd $BASE_DIR
-check_command "docker compose down && docker compose up -d" \
+check_command "$DOCKER_COMPOSE_CMD down && $DOCKER_COMPOSE_CMD up -d" \
     "Conteneurs démarrés avec succès." \
     "Erreur lors du démarrage des conteneurs."
+
 
 # 10. Initialisation de la base de données dans Odoo
 echo "Initialisation de la base de données Odoo..."
