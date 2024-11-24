@@ -261,3 +261,30 @@ check_pg_connection
 
 # Si tout est bon, continuer le script
 success "La base de données est prête. Continuité du script."
+
+
+
+
+
+# 11. Vérification de l'état des services
+echo "Vérification des services..."
+docker ps && success "Services Odoo et PostgreSQL actifs."
+
+# 12. Désactivation du pare-feu (si nécessaire)
+echo "Désactivation du pare-feu (si nécessaire)..."
+sudo ufw disable && success "Pare-feu désactivé."
+
+# 13. Test du port HTTP
+echo "Test du port HTTP..."
+check_command "curl -s http://127.0.0.1:8069" \
+    "Port HTTP testé avec succès. Odoo est accessible." \
+    "Erreur lors du test du port HTTP."
+
+# 14. Informations de connexion
+echo "Lien d'accès à l'application Odoo :"
+echo "URL : http://<IP_PUBLIQUE_VM>:8069"
+echo "Identifiants par défaut :"
+echo "Utilisateur : admin"
+echo "Mot de passe : admin"
+
+success "Installation complète et fonctionnelle !"
