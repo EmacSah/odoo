@@ -17,15 +17,17 @@ error() {
 }
 
 # Variables configurables
-IMAGE_NAME="odoo-custom"
+IMAGE_NAME="odoo-EmacSah"
 ODOO_VERSION="16"
 
 # Créer le répertoire de construction
-mkdir -p odoo-docker
+mkdir -p odoo-prospection
 cd odoo-docker
 
+# Créer les répertoires nécessaires
+mkdir -p config extra-addons data
+
 # Créer le fichier de configuration Odoo
-mkdir -p config
 tee config/odoo.conf > /dev/null <<EOL
 [options]
 addons_path = /mnt/extra-addons
