@@ -93,7 +93,7 @@ FROM odoo:$ODOO_VERSION
 COPY ./config /etc/odoo
 COPY ./entrypoint.sh /usr/local/bin/entrypoint.sh
 
-# Changer les permissions du script d'entrée
+# Rendre le script d'entrée exécutable
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
 # Définir le script d'entrée
@@ -110,3 +110,17 @@ success "Dockerfile créé."
 # Construire l'image Docker
 docker build -t $IMAGE_NAME .
 success "Image Docker $IMAGE_NAME construite avec succès."
+
+# Démarrer un conteneur à partir de l'image personnalisée
+docker run -d --name odoo_web -p 8069:8069 $IMAGE_NAME
+success "Conteneur Odoo démarré avec succès."
+
+# Vérifier les conteneurs en cours d'exécution
+docker ps
+
+# Afficher l'URL d'accès à l'application Odoo
+echo "Lien d'accès à l'application Odoo :"
+echo "URL : http://localhost:8069"
+echo "Identifiants par défaut :"
+echo "Utilisateur : admin"
+echo "Mot de passe : admin"
