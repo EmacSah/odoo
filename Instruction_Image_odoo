@@ -3,13 +3,52 @@ Prérequis :
 Assurez-vous que Docker est installé et en cours d'exécution sur votre machine.
 Exécution :
 
+cloner le depôt dans votre docker desktop : git clone -b image_odoo https://github.com/votre_utilisateur/votre_repository.git
+
+positionner vous sur le repertoire(depot) :cd votre_repository
+
 Rendez le script de construction exécutable : chmod +x build_odoo_image.sh
 Exécutez le script de construction : ./build_odoo_image.sh
 
 Déploiement :
 
-Démarrez un conteneur à partir de l'image personnalisée : docker run -it --rm odoo-custom
+Démarrez un conteneur à partir de l'image personnalisée : docker run -it --rm odoo-emac
+vérifier le deploiement : docker ps
+Accéder à l'Application Odoo : http://localhost:8069 pour accéder à l'interface Odoo
+
 
 Suivez les instructions à l'écran pour fournir les paramètres de configuration.
 Ce script automatisé crée une image Docker pour Odoo qui demande les paramètres de configuration à 
 l'utilisateur lors du déploiement, permettant ainsi une configuration flexible et personnalisée.
+
+
+Étape 5 : Nettoyer (Optionnel)
+docker stop $(docker ps -aq)
+docker rm $(docker ps -aq)
+docker rmi odoo-custom
+
+
+--------------------- resumé des commandes ---------------------------------------------------
+# Cloner la branche spécifique du dépôt GitHub
+git clone -b image_odoo https://github.com/votre_utilisateur/votre_repository.git
+cd votre_repository
+
+# Rendre le script de construction exécutable
+chmod +x build_odoo_image.sh
+
+# Exécuter le script de construction
+./build_odoo_image.sh
+
+# Démarrer un conteneur à partir de l'image personnalisée
+docker run -it --rm odoo-custom
+
+# Vérifier les conteneurs en cours d'exécution
+docker ps
+
+# (Optionnel) Arrêter et supprimer les conteneurs
+docker stop $(docker ps -aq)
+docker rm $(docker ps -aq)
+
+# (Optionnel) Supprimer l'image Docker personnalisée
+docker rmi odoo-custom
+
