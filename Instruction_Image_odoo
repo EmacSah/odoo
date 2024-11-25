@@ -9,7 +9,6 @@ positionner vous sur le repertoire(depot) :cd votre_repository
 
 Rendez le script de construction exécutable : chmod +x build_odoo_image.sh
 Exécutez le script de construction : ./build_odoo_image.sh 
-ou docker build -t odoo-emac
 
 Déploiement :
 
