@@ -17,12 +17,8 @@ error() {
 }
 
 # Variables configurables
-IMAGE_NAME="odoo-EmacSah"
+IMAGE_NAME="odoo-emacsah"
 ODOO_VERSION="16"
-
-# Créer le répertoire de construction
-mkdir -p odoo-prospection
-cd odoo-docker
 
 # Créer les répertoires nécessaires
 mkdir -p config extra-addons data
@@ -39,29 +35,6 @@ db_name = prospection
 xmlrpc_interface = 0.0.0.0
 EOL
 success "Fichier odoo.conf créé."
-
-# Créer le Dockerfile
-tee Dockerfile > /dev/null <<EOL
-# Dockerfile pour Odoo
-FROM odoo:$ODOO_VERSION
-
-# Copier les fichiers de configuration
-COPY ./config /etc/odoo
-COPY ./entrypoint.sh /usr/local/bin/entrypoint.sh
-
-# Rendre le script d'entrée exécutable
-RUN chmod +x /usr/local/bin/entrypoint.sh
-
-# Définir le script d'entrée
-ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
-
-# Exposer le port
-EXPOSE 8069
-
-# Commande de démarrage
-CMD ["odoo", "--xmlrpc-port=8069", "--db-filter=.*"]
-EOL
-success "Dockerfile créé."
 
 # Créer le script d'entrée
 tee entrypoint.sh > /dev/null <<EOL
@@ -110,6 +83,29 @@ success "Configuration d'Odoo mise à jour avec succès."
 exec "\$@"
 EOL
 success "Script d'entrée créé."
+
+# Créer le Dockerfile
+tee Dockerfile > /dev/null <<EOL
+# Dockerfile pour Odoo
+FROM odoo:$ODOO_VERSION
+
+# Copier les fichiers de configuration
+COPY ./config /etc/odoo
+COPY ./entrypoint.sh /usr/local/bin/entrypoint.sh
+
+# Rendre le script d'entrée exécutable
+RUN chmod +x /usr/local/bin/entrypoint.sh
+
+# Définir le script d'entrée
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+
+# Exposer le port
+EXPOSE 8069
+
+# Commande de démarrage
+CMD ["odoo", "--xmlrpc-port=8069", "--db-filter=.*"]
+EOL
+success "Dockerfile créé."
 
 # Construire l'image Docker
 docker build -t $IMAGE_NAME .
