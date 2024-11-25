@@ -19,7 +19,7 @@ error() {
 }
 
 # Variables par défaut
-IMAGE_NAME="odoo-custom"
+IMAGE_NAME="odoo-emac"
 ODOO_VERSION="16"
 POSTGRES_VERSION="14"
 ODOO_PORT="8069"
