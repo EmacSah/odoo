@@ -17,7 +17,7 @@ error() {
 }
 
 # Variables configurables
-IMAGE_NAME="odoo-emacsah"
+IMAGE_NAME="odoo-emac"
 ODOO_VERSION="16"
 
 # Créer les répertoires nécessaires
@@ -93,7 +93,7 @@ FROM odoo:$ODOO_VERSION
 COPY ./config /etc/odoo
 COPY ./entrypoint.sh /usr/local/bin/entrypoint.sh
 
-# Rendre le script d'entrée exécutable
+# Changer les permissions du script d'entrée
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
 # Définir le script d'entrée
