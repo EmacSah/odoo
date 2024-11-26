@@ -30,12 +30,20 @@ error() {
     exit 1
 }
 
-# Variables configurables
-IMAGE_NAME="odoo-emac"
-POSTGRES_IMAGE="postgres:14"
-ODOO_VERSION="16"
+# Variables par défaut
+DEFAULT_ODOO_VERSION="16"
+DEFAULT_POSTGRES_VERSION="14"
+ODOO_CONTAINER_NAME=${ODOO_CONTAINER_NAME:-odoo_web}
+POSTGRES_CONTAINER_NAME=${POSTGRES_CONTAINER_NAME:-pg_db}
+IMAGE_NAME="odoo-custom-$DEFAULT_ODOO_VERSION"
 
 # Demande des variables utilisateur
+read -p "Entrez la version d'Odoo à installer (par défaut : $DEFAULT_ODOO_VERSION): " ODOO_VERSION
+ODOO_VERSION=${ODOO_VERSION:-$DEFAULT_ODOO_VERSION}
+
+read -p "Entrez la version de PostgreSQL à installer (par défaut : $DEFAULT_POSTGRES_VERSION): " POSTGRES_VERSION
+POSTGRES_VERSION=${POSTGRES_VERSION:-$DEFAULT_POSTGRES_VERSION}
+
 read -p "Entrez le nom de la base de données PostgreSQL (par défaut : odoo): " DB_NAME
 DB_NAME=${DB_NAME:-odoo}
 
@@ -45,8 +53,8 @@ DB_USER=${DB_USER:-odoo}
 read -p "Entrez le mot de passe de la base de données PostgreSQL (par défaut : odoo): " DB_PASSWORD
 DB_PASSWORD=${DB_PASSWORD:-odoo}
 
-read -p "Entrez l'hôte de la base de données PostgreSQL (par défaut : pg_db): " DB_HOST
-DB_HOST=${DB_HOST:-pg_db}
+read -p "Entrez l'hôte de la base de données PostgreSQL (par défaut : $POSTGRES_CONTAINER_NAME): " DB_HOST
+DB_HOST=${DB_HOST:-$POSTGRES_CONTAINER_NAME}
 
 read -p "Entrez le port de la base de données PostgreSQL (par défaut : 5432): " DB_PORT
 DB_PORT=${DB_PORT:-5432}
@@ -56,6 +64,8 @@ ODOO_PORT=${ODOO_PORT:-8069}
 
 # Vérification des variables utilisateur
 echo "Configuration choisie :"
+echo " - Version d'Odoo : $ODOO_VERSION"
+echo " - Version de PostgreSQL : $POSTGRES_VERSION"
 echo " - Nom de la base de données : $DB_NAME"
 echo " - Utilisateur PostgreSQL : $DB_USER"
 echo " - Mot de passe PostgreSQL : $DB_PASSWORD"
@@ -132,7 +142,7 @@ else
 fi
 
 # Démarrer un conteneur PostgreSQL
-docker run -d --name pg_db -e POSTGRES_DB=$DB_NAME -e POSTGRES_USER=$DB_USER -e POSTGRES_PASSWORD=$DB_PASSWORD -p 5432:5432 $POSTGRES_IMAGE
+docker run -d --name $POSTGRES_CONTAINER_NAME -e POSTGRES_DB=$DB_NAME -e POSTGRES_USER=$DB_USER -e POSTGRES_PASSWORD=$DB_PASSWORD -p 5432:5432 postgres:$POSTGRES_VERSION
 if [[ $? -ne 0 ]]; then
     error "Erreur lors du démarrage du conteneur PostgreSQL."
 else
@@ -140,7 +150,7 @@ else
 fi
 
 # Démarrer un conteneur Odoo
-docker run -d --name odoo_web -p $ODOO_PORT:$ODOO_PORT --link pg_db:db $IMAGE_NAME
+docker run -d --name $ODOO_CONTAINER_NAME -p $ODOO_PORT:$ODOO_PORT --link $POSTGRES_CONTAINER_NAME:db $IMAGE_NAME
 if [[ $? -ne 0 ]]; then
     error "Erreur lors du démarrage du conteneur Odoo."
 else
@@ -156,5 +166,6 @@ echo "URL : http://localhost:$ODOO_PORT"
 echo "Identifiants par défaut :"
 echo "Utilisateur : admin"
 echo "Mot de passe : admin"
+
 
 success "Déploiement complet et fonctionnel !"
