@@ -1,4 +1,16 @@
 #!/bin/bash
+#-----------------------------INSTRUCTIONS A SUIVRE------------------------------------------------------
+
+# Instruction script d'installation:
+#-Se conncecter sur docker desktop
+#-Ouvrir le terminal de commande juste en dessous selon votre version
+#-saisir la commande : git clone -b image_odoo_emacsah https://github.com/EmacSah/odoo.git
+#-Une fois le depot cloné, deplacez vous dans le depôt cloné : Cd ./odoo
+#- Saisir la commande d'attribution des droits : chmod +x docker_desktop_deploy_odoo_emac.sh
+#- Ensuite saisir la commande pour lancer le script : ./docker_desktop_deploy_odoo_emac.sh
+#- Tu vas renseigner tes différents paramètres au fur et à mésure pour personnaliser ton installation.
+
+#-------------------------------------------------------------------------------------------------------
 
 # Couleurs pour les messages
 GREEN='\033[0;32m'
