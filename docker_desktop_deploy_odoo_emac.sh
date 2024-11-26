@@ -11,6 +11,11 @@
 #- Ensuite saisir la commande pour lancer le script : ./docker_desktop_deploy_odoo_emac.sh
 #- Tu vas renseigner tes différents paramètres au fur et à mésure pour personnaliser ton installation.
 
+#---------------------------Erreur d'installation ----------------------------------------------------
+# - Erreur de connectivité entre le conteneur Odoo et Postgresql : verifier les configuration réseau
+# - exécuter la commande : docker network inspect bridge :
+# - vérifier dans la section container si les conatiner existent et si les noms des containers correspondent
+# a ceux que vous aviez configurez dans vos variables.
 #-------------------------------------------------------------------------------------------------------
 
 
@@ -35,7 +40,7 @@ DEFAULT_ODOO_VERSION="16"
 DEFAULT_POSTGRES_VERSION="14"
 ODOO_CONTAINER_NAME=${ODOO_CONTAINER_NAME:-odoo_web}
 POSTGRES_CONTAINER_NAME=${POSTGRES_CONTAINER_NAME:-pg_db}
-IMAGE_NAME="odoo-custom-$DEFAULT_ODOO_VERSION"
+IMAGE_NAME="odoo-$DEFAULT_ODOO_VERSION"
 
 # Demande des variables utilisateur
 read -p "Entrez la version d'Odoo à installer (par défaut : $DEFAULT_ODOO_VERSION): " ODOO_VERSION
@@ -70,8 +75,6 @@ read -p "Entrez le port pour Odoo (par défaut : 8069): " ODOO_PORT
 ODOO_PORT=${ODOO_PORT:-8069}
 
 
-
-
 # Vérification des variables utilisateur
 echo "Configuration choisie :"
 echo " - Version d'Odoo : $ODOO_VERSION"
@@ -82,6 +85,14 @@ echo " - Mot de passe PostgreSQL : $DB_PASSWORD"
 echo " - Hôte PostgreSQL : $DB_HOST"
 echo " - Port PostgreSQL : $DB_PORT"
 echo " - Port Odoo : $ODOO_PORT"
+
+# Validation stricte des entrées utilisateur
+if [[ -z "$ODOO_VERSION" || -z "$POSTGRES_VERSION" || -z "$DB_NAME" || -z "$DB_USER" || -z "$DB_PASSWORD" || -z "$DB_HOST" || -z "$DB_PORT" || -z "$ODOO_PORT" ]]; then
+    error "Toutes les variables doivent être renseignées. Relancez le script."
+else
+    success "Configuration validée avec les valeurs fournies."
+fi
+
 
 # Créer les répertoires nécessaires
 mkdir -p config extra-addons data
@@ -147,9 +158,9 @@ success "Script d'entrée (entrypoint.sh) créé."
 docker build -t $IMAGE_NAME .
 if [[ $? -ne 0 ]]; then
     error "Erreur lors de la construction de l'image Docker pour Odoo."
-else
-    success "Image Docker $IMAGE_NAME construite avec succès."
 fi
+success "Image Docker $IMAGE_NAME construite avec succès."
+
 
 # Démarrer un conteneur PostgreSQL
 docker run -d --name $POSTGRES_CONTAINER_NAME -e POSTGRES_DB=$DB_NAME -e POSTGRES_USER=$DB_USER -e POSTGRES_PASSWORD=$DB_PASSWORD -p 5432:5432 postgres:$POSTGRES_VERSION
@@ -159,45 +170,31 @@ else
     success "Conteneur PostgreSQL démarré avec succès."
 fi
 
-# Démarrer un conteneur Odoo
-docker run -d --name $ODOO_CONTAINER_NAME -p $ODOO_PORT:$ODOO_PORT --link $POSTGRES_CONTAINER_NAME:db $IMAGE_NAME
+# Démarrer un conteneur PostgreSQL
+docker run -d --name $POSTGRES_CONTAINER_NAME -e POSTGRES_DB=$DB_NAME -e POSTGRES_USER=$DB_USER -e POSTGRES_PASSWORD=$DB_PASSWORD -p 5432:5432 postgres:$POSTGRES_VERSION
 if [[ $? -ne 0 ]]; then
-    error "Erreur lors du démarrage du conteneur Odoo."
-else
-    success "Conteneur Odoo démarré avec succès."
+    error "Erreur lors du démarrage du conteneur PostgreSQL."
 fi
+success "Conteneur PostgreSQL démarré avec succès."
 
 
-# Vérification du réseau partagé entre les conteneurs Odoo et PostgreSQL
+
+# Vérification et configuration du réseau
 echo "Vérification du réseau partagé entre les conteneurs Odoo et PostgreSQL..."
-
-ODOO_NETWORK=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.NetworkID}}{{end}}' $ODOO_CONTAINER_NAME)
-POSTGRES_NETWORK=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.NetworkID}}{{end}}' $POSTGRES_CONTAINER_NAME)
-
-if [[ "$ODOO_NETWORK" != "$POSTGRES_NETWORK" ]]; then
-    echo "Les conteneurs Odoo et PostgreSQL ne partagent pas le même réseau. Configuration en cours..."
-    DOCKER_NETWORK_NAME="odoo_network"
-    
-    # Création d'un réseau partagé si nécessaire
-    docker network inspect $DOCKER_NETWORK_NAME &>/dev/null || docker network create $DOCKER_NETWORK_NAME
-    
-    # Connexion des conteneurs au réseau partagé
-    docker network connect $DOCKER_NETWORK_NAME $POSTGRES_CONTAINER_NAME
-    docker network connect $DOCKER_NETWORK_NAME $ODOO_CONTAINER_NAME
-    success "Les conteneurs ont été connectés au réseau partagé $DOCKER_NETWORK_NAME."
-else
-    success "Les conteneurs Odoo et PostgreSQL partagent déjà le même réseau."
-fi
+docker network inspect bridge &>/dev/null || docker network create odoo_network
+docker network connect odoo_network $POSTGRES_CONTAINER_NAME
+docker network connect odoo_network $ODOO_CONTAINER_NAME
+success "Les conteneurs partagent le réseau odoo_network."
 
 
 # Test de connectivité entre Odoo et PostgreSQL
 echo "Test de connectivité entre Odoo et PostgreSQL..."
-docker exec -it $ODOO_CONTAINER_NAME curl -s $DB_HOST:5432 > /dev/null
+docker exec -it $POSTGRES_CONTAINER_NAME psql -U $DB_USER -c "\l" &>/dev/null
 if [[ $? -ne 0 ]]; then
-    error "Échec de la connectivité réseau entre Odoo et PostgreSQL. Vérifiez la configuration réseau ou les noms d'hôtes."
-else
-    success "Connectivité réseau entre Odoo et PostgreSQL validée."
+    error "Échec de la connectivité réseau entre Odoo et PostgreSQL. Vérifiez la configuration réseau."
 fi
+success "Connectivité réseau validée."
+
 
 # Initialisation de la base de données Odoo
 echo "Vérification de permissions sur odoo.conf..."
@@ -210,13 +207,12 @@ docker exec -it $POSTGRES_CONTAINER_NAME psql -U $DB_USER -c "\l"
 
 
 # Initialisation de la base de données Odoo
-echo "Initialisation de la base de données Odoo..."
 docker exec -it $ODOO_CONTAINER_NAME odoo --db_host=$DB_HOST --db_user=$DB_USER --db_password=$DB_PASSWORD -d $DB_NAME -i base
 if [[ $? -ne 0 ]]; then
-    error "Erreur lors de l'initialisation de la base de données Odoo. Vérifiez les logs pour plus d'informations."
-else
-    success "Base de données Odoo initialisée avec succès."
+    error "Erreur lors de l'initialisation de la base de données Odoo. Vérifiez les logs."
 fi
+success "Base de données Odoo initialisée avec succès."
+
 
 
 
