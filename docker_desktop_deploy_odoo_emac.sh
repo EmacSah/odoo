@@ -11,7 +11,7 @@
 #- Ensuite saisir la commande pour lancer le script : ./docker_desktop_deploy_odoo_emac.sh
 #- Tu vas renseigner tes différents paramètres au fur et à mésure pour personnaliser ton installation.
 
-#---------------------------Erreur d'installation ----------------------------------------------------
+#--------------------------- Gestion erreur d'installation ----------------------------------------------------
 # - Erreur de connectivité entre le conteneur Odoo et Postgresql : verifier les configuration réseau
 # - exécuter la commande : docker network inspect bridge :
 # - vérifier dans la section container si les conatiner existent et si les noms des containers correspondent
