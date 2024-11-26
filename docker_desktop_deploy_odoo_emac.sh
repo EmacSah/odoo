@@ -56,11 +56,21 @@ DB_PASSWORD=${DB_PASSWORD:-odoo}
 read -p "Entrez l'hôte de la base de données PostgreSQL (par défaut : $POSTGRES_CONTAINER_NAME): " DB_HOST
 DB_HOST=${DB_HOST:-$POSTGRES_CONTAINER_NAME}
 
+# Vérification si DB_HOST correspond bien au nom du conteneur PostgreSQL
+if [[ "$DB_HOST" != "$POSTGRES_CONTAINER_NAME" ]]; then
+    echo "Mise à jour de DB_HOST pour correspondre au conteneur PostgreSQL : $POSTGRES_CONTAINER_NAME"
+    DB_HOST=$POSTGRES_CONTAINER_NAME
+fi
+success "DB_HOST configuré comme : $DB_HOST"
+
 read -p "Entrez le port de la base de données PostgreSQL (par défaut : 5432): " DB_PORT
 DB_PORT=${DB_PORT:-5432}
 
 read -p "Entrez le port pour Odoo (par défaut : 8069): " ODOO_PORT
 ODOO_PORT=${ODOO_PORT:-8069}
+
+
+
 
 # Vérification des variables utilisateur
 echo "Configuration choisie :"
@@ -156,6 +166,38 @@ if [[ $? -ne 0 ]]; then
 else
     success "Conteneur Odoo démarré avec succès."
 fi
+
+
+# Vérification du réseau partagé entre les conteneurs Odoo et PostgreSQL
+echo "Vérification du réseau partagé entre les conteneurs Odoo et PostgreSQL..."
+
+ODOO_NETWORK=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.NetworkID}}{{end}}' $ODOO_CONTAINER_NAME)
+POSTGRES_NETWORK=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.NetworkID}}{{end}}' $POSTGRES_CONTAINER_NAME)
+
+if [[ "$ODOO_NETWORK" != "$POSTGRES_NETWORK" ]]; then
+    echo "Les conteneurs Odoo et PostgreSQL ne partagent pas le même réseau. Configuration en cours..."
+    DOCKER_NETWORK_NAME="odoo_network"
+    
+    # Création d'un réseau partagé si nécessaire
+    docker network inspect $DOCKER_NETWORK_NAME &>/dev/null || docker network create $DOCKER_NETWORK_NAME
+    
+    # Connexion des conteneurs au réseau partagé
+    docker network connect $DOCKER_NETWORK_NAME $POSTGRES_CONTAINER_NAME
+    docker network connect $DOCKER_NETWORK_NAME $ODOO_CONTAINER_NAME
+    success "Les conteneurs ont été connectés au réseau partagé $DOCKER_NETWORK_NAME."
+else
+    success "Les conteneurs Odoo et PostgreSQL partagent déjà le même réseau."
+fi
+
+
+echo "Vérification de la connectivité réseau entre les conteneurs..."
+docker exec -it $ODOO_CONTAINER_NAME ping -c 4 $DB_HOST
+if [[ $? -ne 0 ]]; then
+    error "Échec de la connectivité réseau entre Odoo et PostgreSQL. Vérifiez la configuration réseau."
+fi
+
+success "Connectivité réseau entre Odoo et PostgreSQL validée."
+
 
 # Vérifier les conteneurs en cours d'exécution
 docker ps
