@@ -86,12 +86,31 @@ echo " - Hôte PostgreSQL : $DB_HOST"
 echo " - Port PostgreSQL : $DB_PORT"
 echo " - Port Odoo : $ODOO_PORT"
 
+
+# Fonction pour vérifier l'existence des conteneurs
+check_existing_container() {
+    local container_name=$1
+    if docker ps -a --format '{{.Names}}' | grep -Eq "^${container_name}\$"; then
+        error "Un conteneur avec le nom '${container_name}' existe déjà. Modifiez les variables et relancez le script."
+    fi
+}
+# Vérifier les conteneurs existants
+check_existing_container "$POSTGRES_CONTAINER_NAME"
+check_existing_container "$ODOO_CONTAINER_NAME"
+
+
 # Validation stricte des entrées utilisateur
 if [[ -z "$ODOO_VERSION" || -z "$POSTGRES_VERSION" || -z "$DB_NAME" || -z "$DB_USER" || -z "$DB_PASSWORD" || -z "$DB_HOST" || -z "$DB_PORT" || -z "$ODOO_PORT" ]]; then
     error "Toutes les variables doivent être renseignées. Relancez le script."
 else
     success "Configuration validée avec les valeurs fournies."
 fi
+
+
+#Affichages des informations enregistrées
+echo "Configuration choisie :"
+echo " - Conteneur PostgreSQL : $POSTGRES_CONTAINER_NAME"
+echo " - Conteneur Odoo : $ODOO_CONTAINER_NAME"
 
 
 # Créer les répertoires nécessaires
@@ -163,7 +182,7 @@ success "Image Docker $IMAGE_NAME construite avec succès."
 
 
 # Démarrer un conteneur PostgreSQL
-docker run -d --name $POSTGRES_CONTAINER_NAME -e POSTGRES_DB=$DB_NAME -e POSTGRES_USER=$DB_USER -e POSTGRES_PASSWORD=$DB_PASSWORD -p 5432:5432 postgres:$POSTGRES_VERSION
+docker run -d --name $POSTGRES_CONTAINER_NAME -e POSTGRES_DB=$DB_NAME -e POSTGRES_USER=$DB_USER -e POSTGRES_PASSWORD=$DB_PASSWORD -p $DB_PORT:5432 postgres:$POSTGRES_VERSION
 if [[ $? -ne 0 ]]; then
     error "Erreur lors du démarrage du conteneur PostgreSQL."
 else
@@ -171,7 +190,7 @@ else
 fi
 
 # Démarrer un conteneur PostgreSQL
-docker run -d --name $POSTGRES_CONTAINER_NAME -e POSTGRES_DB=$DB_NAME -e POSTGRES_USER=$DB_USER -e POSTGRES_PASSWORD=$DB_PASSWORD -p 5432:5432 postgres:$POSTGRES_VERSION
+docker run -d --name $ODOO_CONTAINER_NAME -p $ODOO_PORT:$ODOO_PORT --link $POSTGRES_CONTAINER_NAME:db $IMAGE_NAME
 if [[ $? -ne 0 ]]; then
     error "Erreur lors du démarrage du conteneur PostgreSQL."
 fi
