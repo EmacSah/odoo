@@ -17,13 +17,15 @@ error() {
 }
 
 # Variables par défaut
-IMAGE_NAME="odoo-emac"
-ODOO_VERSION="16"
+DEFAULT_ODOO_VERSION="16"
 POSTGRES_VERSION="14"
 ODOO_PORT="8069"
 POSTGRES_PORT="5432"
 
 # Dialogue interactif pour les variables utilisateur
+read -p "Entrez la version d'Odoo à installer (par défaut : $DEFAULT_ODOO_VERSION) : " ODOO_VERSION
+ODOO_VERSION=${ODOO_VERSION:-$DEFAULT_ODOO_VERSION}
+
 read -p "Entrez le nom de la base de données PostgreSQL (par défaut : prospection) : " DB_NAME
 DB_NAME=${DB_NAME:-prospection}
 
@@ -38,6 +40,8 @@ POSTGRES_CONTAINER_NAME=${POSTGRES_CONTAINER_NAME:-pg_db}
 
 read -p "Entrez le nom du conteneur Odoo (par défaut : odoo_web) : " ODOO_CONTAINER_NAME
 ODOO_CONTAINER_NAME=${ODOO_CONTAINER_NAME:-odoo_web}
+
+IMAGE_NAME="odoo-custom-$ODOO_VERSION"
 
 # Créer les répertoires nécessaires
 mkdir -p config extra-addons data
@@ -80,7 +84,8 @@ FROM odoo:$ODOO_VERSION
 COPY ./config /etc/odoo
 COPY ./entrypoint.sh /usr/local/bin/entrypoint.sh
 
-# Rendre le script d'entrée exécutable
+# Ajuster les permissions après la copie
+USER root
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
 # Définir le script d'entrée
