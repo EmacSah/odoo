@@ -13,6 +13,7 @@
 
 #-------------------------------------------------------------------------------------------------------
 
+
 # Couleurs pour les messages
 GREEN='\033[0;32m'
 RED='\033[0;31m'
@@ -29,32 +30,38 @@ error() {
     exit 1
 }
 
-# Variables par défaut
-DEFAULT_ODOO_VERSION="16"
-POSTGRES_VERSION="14"
-ODOO_PORT="8069"
-POSTGRES_PORT="5432"
+# Variables configurables
+IMAGE_NAME="odoo-emac"
+POSTGRES_IMAGE="postgres:14"
+ODOO_VERSION="16"
 
-# Dialogue interactif pour les variables utilisateur
-read -p "Entrez la version d'Odoo à installer (par défaut : $DEFAULT_ODOO_VERSION) : " ODOO_VERSION
-ODOO_VERSION=${ODOO_VERSION:-$DEFAULT_ODOO_VERSION}
+# Demande des variables utilisateur
+read -p "Entrez le nom de la base de données PostgreSQL (par défaut : odoo): " DB_NAME
+DB_NAME=${DB_NAME:-odoo}
 
-read -p "Entrez le nom de la base de données PostgreSQL (par défaut : prospection) : " DB_NAME
-DB_NAME=${DB_NAME:-prospection}
+read -p "Entrez l'utilisateur de la base de données PostgreSQL (par défaut : odoo): " DB_USER
+DB_USER=${DB_USER:-odoo}
 
-read -p "Entrez l'utilisateur de la base de données PostgreSQL (par défaut : prospection) : " DB_USER
-DB_USER=${DB_USER:-prospection}
+read -p "Entrez le mot de passe de la base de données PostgreSQL (par défaut : odoo): " DB_PASSWORD
+DB_PASSWORD=${DB_PASSWORD:-odoo}
 
-read -p "Entrez le mot de passe de la base de données PostgreSQL (par défaut : prospection) : " DB_PASSWORD
-DB_PASSWORD=${DB_PASSWORD:-prospection}
+read -p "Entrez l'hôte de la base de données PostgreSQL (par défaut : pg_db): " DB_HOST
+DB_HOST=${DB_HOST:-pg_db}
 
-read -p "Entrez le nom du conteneur PostgreSQL (par défaut : pg_db) : " POSTGRES_CONTAINER_NAME
-POSTGRES_CONTAINER_NAME=${POSTGRES_CONTAINER_NAME:-pg_db}
+read -p "Entrez le port de la base de données PostgreSQL (par défaut : 5432): " DB_PORT
+DB_PORT=${DB_PORT:-5432}
 
-read -p "Entrez le nom du conteneur Odoo (par défaut : odoo_web) : " ODOO_CONTAINER_NAME
-ODOO_CONTAINER_NAME=${ODOO_CONTAINER_NAME:-odoo_web}
+read -p "Entrez le port pour Odoo (par défaut : 8069): " ODOO_PORT
+ODOO_PORT=${ODOO_PORT:-8069}
 
-IMAGE_NAME="odoo-custom-$ODOO_VERSION"
+# Vérification des variables utilisateur
+echo "Configuration choisie :"
+echo " - Nom de la base de données : $DB_NAME"
+echo " - Utilisateur PostgreSQL : $DB_USER"
+echo " - Mot de passe PostgreSQL : $DB_PASSWORD"
+echo " - Hôte PostgreSQL : $DB_HOST"
+echo " - Port PostgreSQL : $DB_PORT"
+echo " - Port Odoo : $ODOO_PORT"
 
 # Créer les répertoires nécessaires
 mkdir -p config extra-addons data
@@ -63,32 +70,17 @@ mkdir -p config extra-addons data
 tee config/odoo.conf > /dev/null <<EOL
 [options]
 addons_path = /mnt/extra-addons
-db_host = $POSTGRES_CONTAINER_NAME
-db_port = $POSTGRES_PORT
+db_host = $DB_HOST
+db_port = $DB_PORT
 db_user = $DB_USER
 db_password = $DB_PASSWORD
 db_name = $DB_NAME
 xmlrpc_interface = 0.0.0.0
+xmlrpc_port = $ODOO_PORT
 EOL
 success "Fichier odoo.conf créé."
 
-# Créer le fichier entrypoint.sh
-tee entrypoint.sh > /dev/null <<EOL
-#!/bin/bash
-
-# Configuration de la base de données
-sed -i "s/db_name = .*/db_name = \$DB_NAME/" /etc/odoo/odoo.conf
-sed -i "s/db_user = .*/db_user = \$DB_USER/" /etc/odoo/odoo.conf
-sed -i "s/db_password = .*/db_password = \$DB_PASSWORD/" /etc/odoo/odoo.conf
-sed -i "s/db_host = .*/db_host = \$DB_HOST/" /etc/odoo/odoo.conf
-sed -i "s/db_port = .*/db_port = \$DB_PORT/" /etc/odoo/odoo.conf
-
-exec "\$@"
-EOL
-chmod +x entrypoint.sh
-success "Script entrypoint.sh créé."
-
-# Créer le Dockerfile
+# Créer le fichier Dockerfile
 tee Dockerfile > /dev/null <<EOL
 # Dockerfile pour Odoo
 FROM odoo:$ODOO_VERSION
@@ -97,7 +89,7 @@ FROM odoo:$ODOO_VERSION
 COPY ./config /etc/odoo
 COPY ./entrypoint.sh /usr/local/bin/entrypoint.sh
 
-# Ajuster les permissions après la copie
+# Rendre le script d'entrée exécutable
 USER root
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
@@ -108,50 +100,54 @@ ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 EXPOSE $ODOO_PORT
 
 # Commande de démarrage
-CMD ["odoo", "--xmlrpc-port=$ODOO_PORT", "--db-filter=.*"]
+CMD ["odoo", "--xmlrpc-port=$ODOO_PORT"]
 EOL
 success "Dockerfile créé."
 
-# Construire l'image Docker pour Odoo
-echo "Construction de l'image Docker pour Odoo..."
+# Créer le script d'entrée pour configurer Odoo avec les variables utilisateur
+tee entrypoint.sh > /dev/null <<EOL
+#!/bin/bash
+
+# Configuration d'Odoo avec les paramètres utilisateur
+sed -i "s/db_name = .*/db_name = $DB_NAME/" /etc/odoo/odoo.conf
+sed -i "s/db_user = .*/db_user = $DB_USER/" /etc/odoo/odoo.conf
+sed -i "s/db_password = .*/db_password = $DB_PASSWORD/" /etc/odoo/odoo.conf
+sed -i "s/db_host = .*/db_host = $DB_HOST/" /etc/odoo/odoo.conf
+sed -i "s/db_port = .*/db_port = $DB_PORT/" /etc/odoo/odoo.conf
+sed -i "s/xmlrpc_port = .*/xmlrpc_port = $ODOO_PORT/" /etc/odoo/odoo.conf
+
+echo "Configuration d'Odoo mise à jour :"
+/bin/cat /etc/odoo/odoo.conf
+
+exec "\$@"
+EOL
+success "Script d'entrée (entrypoint.sh) créé."
+
+# Construire l'image Docker
 docker build -t $IMAGE_NAME .
-if [[ $? -eq 0 ]]; then
-    success "Image Docker $IMAGE_NAME construite avec succès."
-else
+if [[ $? -ne 0 ]]; then
     error "Erreur lors de la construction de l'image Docker pour Odoo."
+else
+    success "Image Docker $IMAGE_NAME construite avec succès."
 fi
 
 # Démarrer un conteneur PostgreSQL
-echo "Démarrage du conteneur PostgreSQL..."
-docker run -d --name $POSTGRES_CONTAINER_NAME \
-    -e POSTGRES_DB=$DB_NAME \
-    -e POSTGRES_USER=$DB_USER \
-    -e POSTGRES_PASSWORD=$DB_PASSWORD \
-    -p $POSTGRES_PORT:5432 \
-    postgres:$POSTGRES_VERSION
-if [[ $? -eq 0 ]]; then
-    success "Conteneur PostgreSQL démarré avec succès."
-else
+docker run -d --name pg_db -e POSTGRES_DB=$DB_NAME -e POSTGRES_USER=$DB_USER -e POSTGRES_PASSWORD=$DB_PASSWORD -p 5432:5432 $POSTGRES_IMAGE
+if [[ $? -ne 0 ]]; then
     error "Erreur lors du démarrage du conteneur PostgreSQL."
+else
+    success "Conteneur PostgreSQL démarré avec succès."
 fi
-
-# Pause pour s'assurer que PostgreSQL est prêt
-echo "Attente de la disponibilité de PostgreSQL..."
-sleep 10
 
 # Démarrer un conteneur Odoo
-echo "Démarrage du conteneur Odoo..."
-docker run -d --name $ODOO_CONTAINER_NAME \
-    -p $ODOO_PORT:8069 \
-    --link $POSTGRES_CONTAINER_NAME:$POSTGRES_CONTAINER_NAME \
-    $IMAGE_NAME
-if [[ $? -eq 0 ]]; then
-    success "Conteneur Odoo démarré avec succès."
-else
+docker run -d --name odoo_web -p $ODOO_PORT:$ODOO_PORT --link pg_db:db $IMAGE_NAME
+if [[ $? -ne 0 ]]; then
     error "Erreur lors du démarrage du conteneur Odoo."
+else
+    success "Conteneur Odoo démarré avec succès."
 fi
 
-# Vérification des conteneurs en cours d'exécution
+# Vérifier les conteneurs en cours d'exécution
 docker ps
 
 # Afficher l'URL d'accès à l'application Odoo
