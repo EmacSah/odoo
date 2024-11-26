@@ -1,4 +1,5 @@
 #!/bin/bash
+
 #-----------------------------INSTRUCTIONS A SUIVRE------------------------------------------------------
 
 # Instruction script d'installation:
