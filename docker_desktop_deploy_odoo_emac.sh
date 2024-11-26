@@ -42,6 +42,12 @@ ODOO_CONTAINER_NAME=${ODOO_CONTAINER_NAME:-odoo_web}
 POSTGRES_CONTAINER_NAME=${POSTGRES_CONTAINER_NAME:-pg_db}
 IMAGE_NAME="odoo-$DEFAULT_ODOO_VERSION"
 
+
+# Demande des variables utilisateur avec possibilité de modification
+while true; do
+    echo "=== Configuration des variables ==="
+    
+
 # Demande des variables utilisateur
 read -p "Entrez la version d'Odoo à installer (par défaut : $DEFAULT_ODOO_VERSION): " ODOO_VERSION
 ODOO_VERSION=${ODOO_VERSION:-$DEFAULT_ODOO_VERSION}
@@ -57,6 +63,12 @@ DB_USER=${DB_USER:-odoo}
 
 read -p "Entrez le mot de passe de la base de données PostgreSQL (par défaut : odoo): " DB_PASSWORD
 DB_PASSWORD=${DB_PASSWORD:-odoo}
+
+read -p "Entrez le nom du conteneur PostgreSQL (par défaut : $DEFAULT_POSTGRES_CONTAINER_NAME): " POSTGRES_CONTAINER_NAME
+POSTGRES_CONTAINER_NAME=${POSTGRES_CONTAINER_NAME:-$DEFAULT_POSTGRES_CONTAINER_NAME}
+
+read -p "Entrez le nom du conteneur Odoo (par défaut : $DEFAULT_ODOO_CONTAINER_NAME): " ODOO_CONTAINER_NAME
+ODOO_CONTAINER_NAME=${ODOO_CONTAINER_NAME:-$DEFAULT_ODOO_CONTAINER_NAME}
 
 read -p "Entrez l'hôte de la base de données PostgreSQL (par défaut : $POSTGRES_CONTAINER_NAME): " DB_HOST
 DB_HOST=${DB_HOST:-$POSTGRES_CONTAINER_NAME}
@@ -74,17 +86,12 @@ DB_PORT=${DB_PORT:-5432}
 read -p "Entrez le port pour Odoo (par défaut : 8069): " ODOO_PORT
 ODOO_PORT=${ODOO_PORT:-8069}
 
-
-# Vérification des variables utilisateur
-echo "Configuration choisie :"
-echo " - Version d'Odoo : $ODOO_VERSION"
-echo " - Version de PostgreSQL : $POSTGRES_VERSION"
-echo " - Nom de la base de données : $DB_NAME"
-echo " - Utilisateur PostgreSQL : $DB_USER"
-echo " - Mot de passe PostgreSQL : $DB_PASSWORD"
-echo " - Hôte PostgreSQL : $DB_HOST"
-echo " - Port PostgreSQL : $DB_PORT"
-echo " - Port Odoo : $ODOO_PORT"
+read -p "Voulez-vous modifier ces valeurs ? (o/n): " CONFIRMATION
+    if [[ "$CONFIRMATION" == "n" || "$CONFIRMATION" == "N" ]]; then
+        success "Configuration validée avec les valeurs fournies."
+        break
+    fi
+done
 
 
 # Fonction pour vérifier l'existence des conteneurs
@@ -107,8 +114,17 @@ else
 fi
 
 
-#Affichages des informations enregistrées
+
+# Vérification des variables utilisateur
 echo "Configuration choisie :"
+echo " - Version d'Odoo : $ODOO_VERSION"
+echo " - Version de PostgreSQL : $POSTGRES_VERSION"
+echo " - Nom de la base de données : $DB_NAME"
+echo " - Utilisateur PostgreSQL : $DB_USER"
+echo " - Mot de passe PostgreSQL : $DB_PASSWORD"
+echo " - Hôte PostgreSQL : $DB_HOST"
+echo " - Port PostgreSQL : $DB_PORT"
+echo " - Port Odoo : $ODOO_PORT"
 echo " - Conteneur PostgreSQL : $POSTGRES_CONTAINER_NAME"
 echo " - Conteneur Odoo : $ODOO_CONTAINER_NAME"
 
