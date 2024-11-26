@@ -1,7 +1,5 @@
 #!/bin/bash
-#deployement interactif de Odoo sur DockerDesktop 
-#Auteur : Emac Sah
-#Versio : 1.0
+
 # Couleurs pour les messages
 GREEN='\033[0;32m'
 RED='\033[0;31m'
@@ -61,32 +59,13 @@ success "Fichier odoo.conf créé."
 tee entrypoint.sh > /dev/null <<EOL
 #!/bin/bash
 
-# Couleurs pour les messages
-GREEN='\033[0;32m'
-RED='\033[0;31m'
-NC='\033[0m' # No Color
-
-# Fonction pour afficher un message de validation
-success() {
-    echo -e "\${GREEN}[SUCCÈS] \$1\${NC}"
-}
-
-# Fonction pour afficher un message d'erreur
-error() {
-    echo -e "\${RED}[ERREUR] \$1\${NC}"
-    exit 1
-}
-
-# Configurer Odoo avec les variables utilisateur
+# Configuration de la base de données
 sed -i "s/db_name = .*/db_name = \$DB_NAME/" /etc/odoo/odoo.conf
 sed -i "s/db_user = .*/db_user = \$DB_USER/" /etc/odoo/odoo.conf
 sed -i "s/db_password = .*/db_password = \$DB_PASSWORD/" /etc/odoo/odoo.conf
 sed -i "s/db_host = .*/db_host = \$DB_HOST/" /etc/odoo/odoo.conf
 sed -i "s/db_port = .*/db_port = \$DB_PORT/" /etc/odoo/odoo.conf
 
-success "Configuration d'Odoo mise à jour avec succès."
-
-# Démarrer Odoo
 exec "\$@"
 EOL
 chmod +x entrypoint.sh
@@ -115,9 +94,14 @@ CMD ["odoo", "--xmlrpc-port=$ODOO_PORT", "--db-filter=.*"]
 EOL
 success "Dockerfile créé."
 
-# Construire l'image Docker
+# Construire l'image Docker pour Odoo
+echo "Construction de l'image Docker pour Odoo..."
 docker build -t $IMAGE_NAME .
-success "Image Docker $IMAGE_NAME construite avec succès."
+if [[ $? -eq 0 ]]; then
+    success "Image Docker $IMAGE_NAME construite avec succès."
+else
+    error "Erreur lors de la construction de l'image Docker pour Odoo."
+fi
 
 # Démarrer un conteneur PostgreSQL
 echo "Démarrage du conteneur PostgreSQL..."
