@@ -190,13 +190,34 @@ else
 fi
 
 
-echo "Vérification de la connectivité réseau entre les conteneurs..."
-docker exec -it $ODOO_CONTAINER_NAME ping -c 4 $DB_HOST
+# Test de connectivité entre Odoo et PostgreSQL
+echo "Test de connectivité entre Odoo et PostgreSQL..."
+docker exec -it $ODOO_CONTAINER_NAME curl -s $DB_HOST:5432 > /dev/null
 if [[ $? -ne 0 ]]; then
-    error "Échec de la connectivité réseau entre Odoo et PostgreSQL. Vérifiez la configuration réseau."
+    error "Échec de la connectivité réseau entre Odoo et PostgreSQL. Vérifiez la configuration réseau ou les noms d'hôtes."
+else
+    success "Connectivité réseau entre Odoo et PostgreSQL validée."
 fi
 
-success "Connectivité réseau entre Odoo et PostgreSQL validée."
+# Initialisation de la base de données Odoo
+echo "Vérification de permissions sur odoo.conf..."
+docker exec -it $ODOO_CONTAINER_NAME ls -l /etc/odoo/odoo.conf
+
+
+# Initialisation de la base de données Odoo
+echo "Vérification de l'existance de la base de données Odoo..."
+docker exec -it $POSTGRES_CONTAINER_NAME psql -U $DB_USER -c "\l"
+
+
+# Initialisation de la base de données Odoo
+echo "Initialisation de la base de données Odoo..."
+docker exec -it $ODOO_CONTAINER_NAME odoo --db_host=$DB_HOST --db_user=$DB_USER --db_password=$DB_PASSWORD -d $DB_NAME -i base
+if [[ $? -ne 0 ]]; then
+    error "Erreur lors de l'initialisation de la base de données Odoo. Vérifiez les logs pour plus d'informations."
+else
+    success "Base de données Odoo initialisée avec succès."
+fi
+
 
 
 # Vérifier les conteneurs en cours d'exécution
