@@ -28,13 +28,13 @@ RED='\033[0;31m'
 NC='\033[0m' # No Color
 
 # Variables configurables
-PROJECT_NAME="new_odoo_instance"
+PROJECT_NAME="odoo_bot"
 BASE_DIR="/home/$USER/$PROJECT_NAME"
-ODOO_CONTAINER="new_odoo_web"
-POSTGRES_CONTAINER="new_pg_db"
-DB_NAME="new_odoo_db"
-DB_USER="new_odoo_user"
-DB_PASSWORD="new_odoo_password"
+ODOO_CONTAINER="odoo_bot"
+POSTGRES_CONTAINER="pg_db_bot"
+DB_NAME="whatbot"
+DB_USER="whatbot"
+DB_PASSWORD="whatbot"
 NETWORK_NAME="odoo-network"
 ODOO_VERSION="16"  # Vous pouvez changer cette variable pour une autre version d'Odoo
 
@@ -113,7 +113,7 @@ services:
     build: .
     container_name: $ODOO_CONTAINER
     ports:
-      - "8070:8069"  # Utilisez un port différent pour éviter les conflits
+      - "8072:8069"  # Utilisez un port différent pour éviter les conflits
     volumes:
       - ./config:/etc/odoo
       - ./extra-addons:/mnt/extra-addons
