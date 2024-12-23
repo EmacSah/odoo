@@ -36,7 +36,7 @@ DB_NAME="whatbot"
 DB_USER="whatbot"  # Utilisateur existant dans le conteneur PostgreSQL
 DB_PASSWORD="whatbot"  # Mot de passe existant dans le conteneur PostgreSQL
 NETWORK_NAME="odoo-network"  # Utilisez le même réseau que le conteneur PostgreSQL existant
-ODOO_VERSION="16"  # Vous pouvez changer cette variable pour une autre version d'Odoo
+ODOO_VERSION="15"  # Vous pouvez changer cette variable pour une autre version d'Odoo
 
 # Fonction pour afficher un message de validation
 success() {
@@ -68,7 +68,7 @@ check_command "mkdir -p $BASE_DIR/{config,extra-addons,data}" \
 
 # Vérification des droits
 echo "Attribution des droits sur les répertoires..."
-check_command "chmod -R 755 $BASE_DIR && chown -R $USER:$USER $BASE_DIR" \
+check_command "sudo chmod -R 755 $BASE_DIR && sudo chown -R $USER:$USER $BASE_DIR" \
     "Droits attribués avec succès." \
     "Erreur lors de l'attribution des droits."
 
