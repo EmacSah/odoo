@@ -56,7 +56,8 @@ NETWORK_NAME="odoo16_network"
 docker network create $NETWORK_NAME || success "Réseau Docker '$NETWORK_NAME' déjà existant."
 
 # Création des répertoires pour Odoo
-mkdir -p "$PROJECT_DIR/config" "$PROJECT_DIR/data" "$PROJECT_DIR/addons" || error "Impossible de créer les répertoires."
+PROJECT_DIR=$(realpath "$PROJECT_DIR")
+mkdir -p "$PROJECT_DIR/config" "$PROJECT_DIR/data" "$PROJECT_DIR/addons"
 success "Répertoires projet créés avec succès."
 
 # Création du fichier odoo.conf
