@@ -31,11 +31,11 @@ NC='\033[0m' # No Color
 PROJECT_NAME="odoo_bot"
 BASE_DIR="/home/$USER/$PROJECT_NAME"
 ODOO_CONTAINER="odoo_bot"
-POSTGRES_CONTAINER="pg_db_bot"
+POSTGRES_CONTAINER="pg_db_bot"  # Nom du conteneur PostgreSQL
 DB_NAME="whatbot"
-DB_USER="whatbot"
-DB_PASSWORD="whatbot"
-NETWORK_NAME="odoo-network"
+DB_USER="whatbot"  # Utilisateur existant dans le conteneur PostgreSQL
+DB_PASSWORD="whatbot"  # Mot de passe existant dans le conteneur PostgreSQL
+NETWORK_NAME="odoo-network"  # Utilisez le même réseau que le conteneur PostgreSQL existant
 ODOO_VERSION="16"  # Vous pouvez changer cette variable pour une autre version d'Odoo
 
 # Fonction pour afficher un message de validation
@@ -77,7 +77,7 @@ tee $BASE_DIR/config/odoo.conf > /dev/null <<EOL
 [options]
 addons_path = /mnt/extra-addons
 db_host = $POSTGRES_CONTAINER
-db_port = 5432
+db_port = 5433
 db_user = $DB_USER
 db_password = $DB_PASSWORD
 db_name = $DB_NAME
@@ -104,6 +104,8 @@ services:
       POSTGRES_DB: $DB_NAME
       POSTGRES_USER: $DB_USER
       POSTGRES_PASSWORD: $DB_PASSWORD
+    ports:
+      - "5433:5432"  # Utilisez le port 5433 sur l'hôte pour éviter les conflits
     volumes:
       - ./data:/var/lib/postgresql/data
     networks:
@@ -113,7 +115,7 @@ services:
     build: .
     container_name: $ODOO_CONTAINER
     ports:
-      - "8072:8069"  # Utilisez un port différent pour éviter les conflits
+      - "8073:8069"  # Utilisez un port différent pour éviter les conflits
     volumes:
       - ./config:/etc/odoo
       - ./extra-addons:/mnt/extra-addons
@@ -166,6 +168,17 @@ success "Conteneurs démarrés avec succès."
 
 # 6. Initialisation de la base de données dans Odoo
 echo "Validation de l'existence de la base de données PostgreSQL..."
+
+# Boucle d'attente pour s'assurer que PostgreSQL est prêt
+echo "Attente de la disponibilité de PostgreSQL..."
+for i in {1..30}; do
+    if docker exec -it $POSTGRES_CONTAINER psql -U $DB_USER -c '\l' &>/dev/null; then
+        success "PostgreSQL est prêt."
+        break
+    fi
+    echo "Tentative $i : PostgreSQL n'est pas encore prêt. Réessai dans 5 secondes..."
+    sleep 5
+done
 
 # Vérifier si la base de données existe
 DB_EXISTS=$(docker exec -it $POSTGRES_CONTAINER psql -U $DB_USER -tc "SELECT 1 FROM pg_database WHERE datname='$DB_NAME';" | tr -d '[:space:]')
@@ -241,13 +254,13 @@ docker ps && success "Services Odoo et PostgreSQL actifs."
 
 # 8. Test du port HTTP
 echo "Test du port HTTP..."
-check_command "curl -s http://127.0.0.1:8070" \
+check_command "curl -s http://127.0.0.1:8073" \
     "Port HTTP testé avec succès. Odoo est accessible." \
     "Erreur lors du test du port HTTP."
 
 # 9. Informations de connexion
 echo "Lien d'accès à l'application Odoo :"
-echo "URL : http://<IP_PUBLIQUE_VM>:8070"
+echo "URL : http://<IP_PUBLIQUE_VM>:8073"
 echo "Identifiants par défaut :"
 echo "Utilisateur : admin"
 echo "Mot de passe : admin"
