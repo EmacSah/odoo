@@ -60,6 +60,10 @@ PROJECT_DIR=$(realpath "$PROJECT_DIR")
 mkdir -p "$PROJECT_DIR/config" "$PROJECT_DIR/data" "$PROJECT_DIR/addons"
 success "Répertoires projet créés avec succès."
 
+# Application des permissions
+sudo chmod -R 777 "$PROJECT_DIR/data" "$PROJECT_DIR/addons" "$PROJECT_DIR/config" || error "Erreur lors de l'application des permissions."
+success "Permissions appliquées aux répertoires."
+
 # Création du fichier odoo.conf
 cat > "$PROJECT_DIR/config/odoo.conf" <<EOL
 [options]
@@ -89,6 +93,11 @@ success "Conteneur PostgreSQL ($PG_CONTAINER_NAME) démarré avec succès."
 sleep 15
 echo "Attente de 15 secondes pour permettre à PostgreSQL de démarrer."
 
+# Test de la connectivité PostgreSQL
+echo "Vérification de la connectivité PostgreSQL..."
+docker exec -it $PG_CONTAINER_NAME psql -U $PG_USER -d postgres -c "\l" || error "PostgreSQL est inaccessible."
+success "PostgreSQL est opérationnel."
+
 # Lancement du conteneur Odoo 16
 docker run -d \
   --name $ODOO_CONTAINER_NAME \
@@ -100,14 +109,9 @@ docker run -d \
   odoo:16.0 || error "Erreur lors du démarrage du conteneur Odoo."
 success "Conteneur Odoo ($ODOO_CONTAINER_NAME) démarré avec succès."
 
-# Test de la connexion entre Odoo et PostgreSQL
-echo "Vérification de la connexion entre Odoo et PostgreSQL..."
-docker exec -it $ODOO_CONTAINER_NAME bash -c "pg_isready -h $PG_CONTAINER_NAME -p $PG_PORT -U $PG_USER" || error "Connexion échouée entre Odoo et PostgreSQL."
-success "Connexion réussie entre Odoo et PostgreSQL."
-
 # Initialisation de la base de données avec Odoo
-echo "Initialisation de la base de données..."
-docker exec -it $ODOO_CONTAINER_NAME bash -c "odoo --init=base --db_host=$PG_CONTAINER_NAME --db_port=5432 --db_user=$PG_USER --db_password=$PG_PASSWORD --db_name=$PG_DB_NAME" || error "Erreur lors de l'initialisation de la base de données."
+echo "Initialisation de la base de données avec Odoo..."
+docker exec -it $ODOO_CONTAINER_NAME bash -c "odoo --init=base --db_host=$PG_CONTAINER_NAME --db_port=5432 --db_user=$PG_USER --db_password=$PG_PASSWORD -d $PG_DB_NAME" || error "Erreur lors de l'initialisation de la base de données."
 success "Base de données initialisée avec succès."
 
 # Résumé des informations de configuration
