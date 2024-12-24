@@ -20,14 +20,11 @@
 #-------------------------------------------------------------------------------------------------------
 
 
-
-
 # Couleurs pour les messages
 GREEN='\033[0;32m'
 RED='\033[0;31m'
-NC='\033[0m' # No Color
+NC='\033[0m'
 
-# Fonctions pour les messages
 success() {
     echo -e "${GREEN}[SUCCÈS] $1${NC}"
 }
@@ -39,11 +36,11 @@ error() {
 
 # Variables par défaut
 DEFAULT_PROJECT_DIR="odoo_project"
-DEFAULT_ODOO_VERSION="16.0"
+DEFAULT_ODOO_VERSION="16"
 DEFAULT_POSTGRES_VERSION="14"
-DEFAULT_DB_NAME="odoo_db16"
-DEFAULT_DB_USER="odoo_user"
-DEFAULT_DB_PASSWORD="odoo_pass"
+DEFAULT_DB_NAME="chatbot"
+DEFAULT_DB_USER="chatbot"
+DEFAULT_DB_PASSWORD="chatbot"
 DEFAULT_ODOO_PORT="8079"
 DEFAULT_POSTGRES_PORT="5434"
 
@@ -109,7 +106,7 @@ version: "2.4"
 services:
   postgres:
     image: postgres:$POSTGRES_VERSION
-    container_name: postgres_$POSTGRES_VERSION
+    container_name: pg_chatbot
     environment:
       POSTGRES_DB: $DB_NAME
       POSTGRES_USER: $DB_USER
@@ -123,7 +120,7 @@ services:
 
   odoo:
     image: odoo:$ODOO_VERSION
-    container_name: odoo_$ODOO_VERSION
+    container_name: odoo_chatbot
     depends_on:
       - postgres
     ports:
@@ -137,19 +134,19 @@ services:
       PASSWORD: $DB_PASSWORD
       DATABASE: $DB_NAME
     networks:
-      - odoo_bot
+      - odoo_network
 
 volumes:
   pg_data:
-  odoo_data:
 
 networks:
-  odoo_bot:
+  odoo_network:
+    driver: bridge
 EOL
 chmod 644 docker-compose.yml
 success "Fichier docker-compose.yml créé."
 
-# Démarrage des conteneurs avec Docker Compose
+# Démarrage des conteneurs
 docker-compose up -d
 if [[ $? -ne 0 ]]; then
     error "Échec du démarrage des conteneurs. Vérifiez votre configuration."
@@ -157,20 +154,20 @@ fi
 success "Conteneurs Odoo et PostgreSQL démarrés avec succès."
 
 # Test de connectivité entre Odoo et PostgreSQL
-docker exec postgres_$POSTGRES_VERSION psql -U $DB_USER -c "\l" &>/dev/null
+docker exec pg_chatbot psql -U $DB_USER -c "\l" &>/dev/null
 if [[ $? -ne 0 ]]; then
     error "Échec de la connectivité réseau entre Odoo et PostgreSQL. Vérifiez les logs des conteneurs."
 fi
 success "Connectivité entre Odoo et PostgreSQL validée."
 
 # Initialisation de la base de données Odoo
-docker exec odoo_$ODOO_VERSION odoo --db_host=postgres --db_user=$DB_USER --db_password=$DB_PASSWORD -d $DB_NAME -i base
+docker exec odoo_chatbot odoo --db_host=postgres --db_user=$DB_USER --db_password=$DB_PASSWORD -d $DB_NAME -i base
 if [[ $? -ne 0 ]]; then
     error "Échec de l'initialisation de la base de données Odoo."
 fi
 success "Base de données Odoo initialisée avec succès."
 
-# Affichage des informations de connexion
+# Informations de connexion
 echo -e "${GREEN}Déploiement terminé avec succès !${NC}"
 echo -e "URL Odoo : http://localhost:$ODOO_PORT"
 echo -e "Identifiants par défaut : admin / admin"
