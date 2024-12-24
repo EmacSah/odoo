@@ -104,7 +104,7 @@ success "Fichier de configuration Odoo créé : config/odoo.conf"
 
 # Création du fichier docker-compose.yml
 cat > docker-compose.yml <<EOL
-version: '3.8'
+version: '1.25.0'
 
 services:
   postgres:
@@ -137,14 +137,14 @@ services:
       PASSWORD: $DB_PASSWORD
       DATABASE: $DB_NAME
     networks:
-      - odoo_network
+      - odoo_bot
 
 volumes:
   pg_data:
   odoo_data:
 
 networks:
-  odoo_network:
+  odoo_bot:
 EOL
 chmod 644 docker-compose.yml
 success "Fichier docker-compose.yml créé."
