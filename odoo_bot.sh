@@ -6,6 +6,7 @@
 #-Se conncecter sur docker desktop
 #-Ouvrir le terminal de commande juste en dessous selon votre version
 #-saisir la commande : git clone -b image_odoo_emacsah https://github.com/EmacSah/odoo.git
+#git clone --branch Final_install --single-branch https://github.com/EmacSah/odoo.git
 #-Une fois le depot cloné, deplacez vous dans le depôt cloné : Cd ./odoo
 #- Saisir la commande d'attribution des droits : chmod +x docker_desktop_deploy_odoo_emac.sh
 #- Ensuite saisir la commande pour lancer le script : ./odoo_bot.sh
