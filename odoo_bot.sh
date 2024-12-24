@@ -104,7 +104,7 @@ success "Fichier de configuration Odoo créé : config/odoo.conf"
 
 # Création du fichier docker-compose.yml
 cat > docker-compose.yml <<EOL
-
+version: "3.3"
 
 services:
   postgres:
