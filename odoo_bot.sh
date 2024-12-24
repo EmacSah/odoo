@@ -41,8 +41,8 @@ DEFAULT_POSTGRES_VERSION="14"
 DEFAULT_DB_NAME="chatbot"
 DEFAULT_DB_USER="chatbot"
 DEFAULT_DB_PASSWORD="chatbot"
-DEFAULT_ODOO_PORT="8079"
-DEFAULT_POSTGRES_PORT="5434"
+DEFAULT_ODOO_PORT="8077"
+DEFAULT_POSTGRES_PORT="5438"
 
 # Demande des variables utilisateur
 echo "=== Configuration des variables ==="
@@ -94,7 +94,7 @@ db_user = $DB_USER
 db_password = $DB_PASSWORD
 db_name = $DB_NAME
 xmlrpc_interface = 0.0.0.0
-xmlrpc_port = 8069
+xmlrpc_port = 8077
 EOL
 chmod 644 config/odoo.conf
 success "Fichier de configuration Odoo créé : config/odoo.conf"
@@ -116,7 +116,7 @@ services:
     volumes:
       - pg_data:/var/lib/postgresql/data
     networks:
-      - odoo_network
+      - odoo_chatbot
 
   odoo:
     image: odoo:$ODOO_VERSION
@@ -134,13 +134,13 @@ services:
       PASSWORD: $DB_PASSWORD
       DATABASE: $DB_NAME
     networks:
-      - odoo_network
+      - odoo_chatbot
 
 volumes:
   pg_data:
 
 networks:
-  odoo_network:
+  odoo_chatbot:
     driver: bridge
 EOL
 chmod 644 docker-compose.yml
